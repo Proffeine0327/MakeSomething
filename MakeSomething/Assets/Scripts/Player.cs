@@ -31,7 +31,6 @@ public class Player : MonoBehaviour
     [SerializeField] private Vector2 attackCastSize;
     [SerializeField] private bool canAttack;
     [SerializeField] private bool isSecondAttack;
-    [SerializeField] private float attackSpeed;
     [SerializeField] private float attackCoolTime;
     [SerializeField] private float secondAttackChangeTime;
 
@@ -180,8 +179,13 @@ public class Player : MonoBehaviour
         ani.SetBool("isMove", false);
         ani.SetTrigger("attack");
         yield return new WaitForEndOfFrame();
-        rb.velocity = new Vector2((sr.flipX ? -1 : 1) * 2, rb.velocity.y);
-        yield return new WaitForSeconds(0.35f);
+        rb.velocity = new Vector2((sr.flipX ? -1 : 1), rb.velocity.y);
+        for(float t = 0.35f; t > 0; t-=Time.deltaTime)
+        {
+            yield return new WaitForEndOfFrame();
+            rb.velocity = new Vector2((sr.flipX ? -1 : 1) * (t / 0.35f) * 2, rb.velocity.y);
+        }
+        rb.velocity = new Vector2(0 , rb.velocity.y);
         canMove = true;
 
         bool isSecondAttack = false;
@@ -195,9 +199,11 @@ public class Player : MonoBehaviour
             }
             yield return new WaitForSeconds(Time.deltaTime);
         }
+
         if (!isSecondAttack)
             canAttack = true;
     }
+
 
     IEnumerator SecondAttact()
     {
@@ -206,10 +212,23 @@ public class Player : MonoBehaviour
         ani.SetBool("isMove", false);
         ani.SetTrigger("attack");
         yield return new WaitForEndOfFrame();
-        rb.velocity = new Vector2((sr.flipX ? -1 : 1) * 2, rb.velocity.y);
-        yield return new WaitForSeconds(0.417f);
+        rb.velocity = new Vector2((sr.flipX ? -1 : 1), rb.velocity.y);
+
+        for(float t = 0.417f; t > 0; t-=Time.deltaTime)
+        {
+            yield return new WaitForEndOfFrame();
+            rb.velocity = new Vector2((sr.flipX ? -1 : 1) * (t / 0.417f), rb.velocity.y);
+        }
+        rb.velocity = new Vector2(0 , rb.velocity.y);
+
+        yield return new WaitForSeconds(attackCoolTime);
         canAttack = true;
         canMove = true;
+    }
+
+    public void Attack()
+    {
+        Debug.Log("attack!");
     }
 
     public void Stun(float time)
