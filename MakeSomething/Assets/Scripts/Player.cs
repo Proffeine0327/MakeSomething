@@ -129,12 +129,15 @@ public class Player : MonoBehaviour
         #region Wall
         if(!isWallHang && !isWallSlide)
         {
+            rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+            ani.SetBool("isWallHang", false);
+            ani.SetBool("isWallSlide", false);
+
             var dirWallHangCast = wallHangCastOffset;
             dirWallHangCast.x *= sr.flipX ? -1 : 1;
 
             var dirWallSlideCast = wallSlideCastOffset;
             dirWallSlideCast.x *= sr.flipX ? -1 : 1;
-            Debug.Log($"{dirWallHangCast} / {dirWallSlideCast}");
 
             bool wallHangCastDetected = Physics2D.BoxCast((Vector2)transform.position + dirWallHangCast, wallHangCastSize, 0f, Vector2.zero, 0f, LayerMask.GetMask("Ground"));
             bool wallSlideCastDetected = Physics2D.BoxCast((Vector2)transform.position + dirWallSlideCast, wallSlideCastSize, 0f, Vector2.zero, 0f, LayerMask.GetMask("Ground"));
@@ -142,10 +145,32 @@ public class Player : MonoBehaviour
             if(Input.GetKey(sr.flipX ? leftKey : rightKey))
             {
                 if(wallHangCastDetected && wallSlideCastDetected)
-                    Debug.Log("wallSlide!");
+                {
+                    isWallSlide = true;
+                    ani.SetTrigger("wallSlide");
+                }
                 
                 if(!wallHangCastDetected && wallSlideCastDetected)
-                    Debug.Log("wallHang!");
+                {
+                    isWallHang = true;
+                    ani.SetTrigger("wallHang");
+                }
+            }
+        }
+        else
+        {
+            rb.constraints = RigidbodyConstraints2D.FreezeAll;
+            canMove = false;
+            canJump = false;
+
+            if(isWallHang)
+            {
+                ani.SetBool("isWallHang", true);
+            }
+
+            if(isWallSlide)
+            {
+                ani.SetBool("isWallSlide", true);
             }
         }
         #endregion
