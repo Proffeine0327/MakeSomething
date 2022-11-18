@@ -38,15 +38,21 @@ public class Player : MonoBehaviour
     [SerializeField] private Vector2 wallSlideCastOffset;
     [SerializeField] private Vector2 wallHangCastSize;
     [SerializeField] private Vector2 wallHangCastOffset;
+    [SerializeField] private Vector2 wallHangAdjustCastSize;
+    [SerializeField] private Vector2 wallHangAdjustCastOffset;
     [SerializeField] private float moveKeyPressTimeToWallExit;
     [SerializeField] private float wallCoolTime;
     [SerializeField] private bool isWallSlide;
     [SerializeField] private bool isWallHang;
+    [SerializeField] private bool isWallClimb;
+    [Header("Crouch")]
+    [SerializeField] private bool isCrouch;
 
     private float currentJumpTime;
     private float currentJumpScale;
     private float currentMoveKeyPressTimeToWallClimbExit;
-    private float currentWallClimbCoolTime;
+    private float currentWallCoolTime;
+    private Coroutine currentWallClimbCoroutine;
 
     Rigidbody2D rb;
     SpriteRenderer sr;
@@ -66,8 +72,10 @@ public class Player : MonoBehaviour
         bool isGround = Physics2D.BoxCast((Vector2)transform.position + groundCastOffset, groundCastSize, 0f, Vector2.zero, 0, LayerMask.GetMask("Ground"));
         ani.SetBool("isGround", isGround);
 
+        bool isSomethingOnHead = Physics2D.BoxCast((Vector2)transform.position + jumpStopCastOffset, jumpStopCastSize, 0f, Vector2.zero, 0, jumpStopLayer);
+
         #region Move
-        if (canMove)
+        if (canMove && !isCrouch)
         {
             if (Input.GetKey(leftKey))
             {
@@ -92,6 +100,25 @@ public class Player : MonoBehaviour
         }
         #endregion
 
+        #region Crouch
+        if ((Input.GetKey(downKey) || isSomethingOnHead) && isGround)
+        {
+            ani.SetBool("isCrouch", true);
+            isCrouch = true;
+
+            if(Input.GetKey(leftKey))
+                sr.flipX = true;
+            
+            if(Input.GetKey(rightKey))
+                sr.flipX = false;
+        }
+        else
+        {
+            ani.SetBool("isCrouch", false);
+            isCrouch = false;
+        }
+        #endregion
+
         #region Jump
         if (canJump)
         {
@@ -105,8 +132,6 @@ public class Player : MonoBehaviour
 
             if (Input.GetKey(jumpKey) && isJumping)
             {
-                bool isSomethingOnHead = Physics2D.BoxCast((Vector2)transform.position + jumpStopCastOffset, jumpStopCastSize, 0f, Vector2.zero, 0, jumpStopLayer);
-
                 currentJumpScale *= 0.98f;
                 rb.velocity = new Vector2(rb.velocity.x, currentJumpScale);
 
@@ -127,34 +152,51 @@ public class Player : MonoBehaviour
         #endregion
 
         #region Wall
-        if(!isWallHang && !isWallSlide)
+        if (!isWallHang && !isWallSlide && !isWallClimb)
         {
-            rb.constraints = RigidbodyConstraints2D.FreezeRotation;
-            ani.SetBool("isWallHang", false);
-            ani.SetBool("isWallSlide", false);
-
-            var dirWallHangCast = wallHangCastOffset;
-            dirWallHangCast.x *= sr.flipX ? -1 : 1;
-
-            var dirWallSlideCast = wallSlideCastOffset;
-            dirWallSlideCast.x *= sr.flipX ? -1 : 1;
-
-            bool wallHangCastDetected = Physics2D.BoxCast((Vector2)transform.position + dirWallHangCast, wallHangCastSize, 0f, Vector2.zero, 0f, LayerMask.GetMask("Ground"));
-            bool wallSlideCastDetected = Physics2D.BoxCast((Vector2)transform.position + dirWallSlideCast, wallSlideCastSize, 0f, Vector2.zero, 0f, LayerMask.GetMask("Ground"));
-
-            if(Input.GetKey(sr.flipX ? leftKey : rightKey))
+            if (currentWallCoolTime <= 0)
             {
-                if(wallHangCastDetected && wallSlideCastDetected)
+                ani.SetBool("isWallHang", false);
+                ani.SetBool("isWallSlide", false);
+
+                var dirWallHangCast = wallHangCastOffset;
+                dirWallHangCast.x *= sr.flipX ? -1 : 1;
+
+                var dirWallSlideCast = wallSlideCastOffset;
+                dirWallSlideCast.x *= sr.flipX ? -1 : 1;
+
+                bool wallHangCastDetected = Physics2D.BoxCast((Vector2)transform.position + dirWallHangCast, wallHangCastSize, 0f, Vector2.zero, 0f, LayerMask.GetMask("Ground"));
+                bool wallSlideCastDetected = Physics2D.BoxCast((Vector2)transform.position + dirWallSlideCast, wallSlideCastSize, 0f, Vector2.zero, 0f, LayerMask.GetMask("Ground"));
+
+                if (Input.GetKey(sr.flipX ? leftKey : rightKey))
                 {
-                    isWallSlide = true;
-                    ani.SetTrigger("wallSlide");
+                    if (!isGround)
+                    {
+                        if (wallHangCastDetected && wallSlideCastDetected)
+                        {
+                            isWallSlide = true;
+                            ani.SetTrigger("wallSlide");
+                        }
+
+                        if (!wallHangCastDetected && wallSlideCastDetected)
+                        {
+                            var AdjustedPos = Mathf.CeilToInt(transform.position.y) - 0.5f;
+                            transform.position = new Vector3(transform.position.x, AdjustedPos, transform.position.z);
+
+                            var dirWallAdjustHangCast = wallHangAdjustCastOffset;
+                            dirWallAdjustHangCast.x *= GetComponent<SpriteRenderer>().flipX ? -1 : 1;
+                            if (!Physics2D.BoxCast((Vector2)transform.position + dirWallAdjustHangCast, wallHangAdjustCastSize, 0f, Vector2.zero, 0f, LayerMask.GetMask("Ground")))
+                                transform.Translate(new Vector3(0, -1, 0));
+
+                            isWallHang = true;
+                            ani.SetTrigger("wallHang");
+                        }
+                    }
                 }
-                
-                if(!wallHangCastDetected && wallSlideCastDetected)
-                {
-                    isWallHang = true;
-                    ani.SetTrigger("wallHang");
-                }
+            }
+            else
+            {
+                currentWallCoolTime -= Time.deltaTime;
             }
         }
         else
@@ -162,21 +204,130 @@ public class Player : MonoBehaviour
             rb.constraints = RigidbodyConstraints2D.FreezeAll;
             canMove = false;
             canJump = false;
+            isJumping = false;
 
-            if(isWallHang)
+            if (isWallHang)
             {
                 ani.SetBool("isWallHang", true);
+
+                bool isWallHangExit = false;
+
+                if (Input.GetKey(sr.flipX ? rightKey : leftKey))
+                {
+                    currentMoveKeyPressTimeToWallClimbExit += Time.deltaTime;
+
+                    if (currentMoveKeyPressTimeToWallClimbExit > moveKeyPressTimeToWallExit) isWallHangExit = true;
+                }
+
+                if (Input.GetKeyUp(sr.flipX ? rightKey : leftKey))
+                {
+                    currentMoveKeyPressTimeToWallClimbExit = 0;
+                }
+
+                if (Input.GetKeyDown(downKey)) 
+                {
+                    isWallHangExit = true;
+                }
+
+                if (Input.GetKey(jumpKey))
+                {
+                    if (!isWallClimb)
+                    {
+                        isWallClimb = true;
+                        isWallHang = false;
+                        if(currentWallClimbCoroutine != null)
+                            StopCoroutine(currentWallClimbCoroutine);
+                        currentWallClimbCoroutine = StartCoroutine(WallClimb());
+                        Debug.Log("start");
+                    }
+                }
+
+                if (isWallHangExit)
+                {
+                    currentMoveKeyPressTimeToWallClimbExit = 0;
+                    canMove = true;
+                    canJump = true;
+                    isWallHang = false;
+                    currentWallCoolTime = wallCoolTime;
+                    rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+                }
             }
 
-            if(isWallSlide)
+            if (isWallSlide)
             {
                 ani.SetBool("isWallSlide", true);
+
+                bool isWallSlideExit = false;
+
+                if (Input.GetKey(sr.flipX ? rightKey : leftKey))
+                {
+                    currentMoveKeyPressTimeToWallClimbExit += Time.deltaTime;
+
+                    if (currentMoveKeyPressTimeToWallClimbExit > moveKeyPressTimeToWallExit)
+                        isWallSlideExit = true;
+                }
+
+                if (Input.GetKeyUp(sr.flipX ? rightKey : leftKey))
+                {
+                    currentMoveKeyPressTimeToWallClimbExit = 0;
+                }
+
+                if (Input.GetKeyDown(downKey))
+                    isWallSlideExit = true;
+
+                if (Input.GetKeyDown(jumpKey))
+                {
+                    rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+                    ani.SetTrigger("jump");
+                    isWallSlide = false;
+
+                    rb.velocity = new Vector2((sr.flipX ? 1 : -1) * maxMoveSpeed, jumpScale * 1.2f);
+                    canMove = true;
+                    canJump = true;
+                    currentWallCoolTime = wallCoolTime;
+                    sr.flipX = !sr.flipX;
+                }
+
+                if (isWallSlideExit)
+                {
+                    currentMoveKeyPressTimeToWallClimbExit = 0;
+                    canMove = true;
+                    canJump = true;
+                    isWallSlide = false;
+                    currentWallCoolTime = wallCoolTime;
+                    rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+                }
             }
         }
         #endregion
 
         ani.SetFloat("xVelocity", rb.velocity.x);
         ani.SetFloat("yVelocity", rb.velocity.y);
+    }
+
+    IEnumerator WallClimb()
+    {
+        canMove = false;
+        canJump = false;
+        isWallHang = false;
+
+        ani.SetTrigger("wallClimb");
+        ani.SetBool("isWallClimb", true);
+        var currentState = ani.GetCurrentAnimatorStateInfo(0);
+        
+        yield return new WaitForSeconds(currentState.length / currentState.speedMultiplier);
+        Vector3 climbPos = transform.position;
+        climbPos.x += sr.flipX ? -1 : 1;
+        climbPos.y += 1.5f;
+        transform.position = climbPos;
+        ani.SetBool("isWallClimb", false);
+
+        currentMoveKeyPressTimeToWallClimbExit = 0;
+        rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+        isWallClimb = false;
+
+        canMove = true;
+        canJump = true;
     }
 
     private void OnDrawGizmos()
@@ -196,6 +347,11 @@ public class Player : MonoBehaviour
         dirWallHangCast.x *= GetComponent<SpriteRenderer>().flipX ? -1 : 1;
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireCube((Vector2)transform.position + dirWallHangCast, wallHangCastSize);
+
+        var dirWallAdjustHangCast = wallHangAdjustCastOffset;
+        dirWallAdjustHangCast.x *= GetComponent<SpriteRenderer>().flipX ? -1 : 1;
+        Gizmos.color = Color.gray;
+        Gizmos.DrawWireCube((Vector2)transform.position + dirWallAdjustHangCast, wallHangAdjustCastSize);
     }
 }
 
@@ -206,7 +362,7 @@ public class PlayerEditor : Editor
     public override void OnInspectorGUI()
     {
         var iterator = serializedObject.GetIterator();
-        
+
         iterator.NextVisible(true); //m_script
         EditorGUILayout.PropertyField(iterator);
         EditorGUILayout.Space(10);
