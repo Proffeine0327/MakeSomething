@@ -47,15 +47,20 @@ public class Player : MonoBehaviour
     [SerializeField] private bool isWallClimb;
     [Header("Crouch")]
     [SerializeField] private bool isCrouch;
+    [SerializeField] private Vector2 crouchColliderOffset;
+    [SerializeField] private Vector2 crouchColliderSize;
 
     private float currentJumpTime;
     private float currentJumpScale;
     private float currentMoveKeyPressTimeToWallClimbExit;
     private float currentWallCoolTime;
     private Coroutine currentWallClimbCoroutine;
+    private Vector2 normalColliderSize;
+    private Vector2 normalColliderOffset;
 
     Rigidbody2D rb;
     SpriteRenderer sr;
+    BoxCollider2D bc;
     Animator ani;
 
     private void Awake()
@@ -64,7 +69,11 @@ public class Player : MonoBehaviour
 
         rb = GetComponent<Rigidbody2D>();
         sr = GetComponent<SpriteRenderer>();
+        bc = GetComponent<BoxCollider2D>();
         ani = GetComponent<Animator>();
+
+        normalColliderOffset = bc.offset;
+        normalColliderSize = bc.size;
     }
 
     private void Update()
@@ -101,21 +110,28 @@ public class Player : MonoBehaviour
         #endregion
 
         #region Crouch
-        if ((Input.GetKey(downKey) || isSomethingOnHead) && isGround)
+        if (!isWallSlide && !isWallClimb)
         {
-            ani.SetBool("isCrouch", true);
-            isCrouch = true;
+            if ((Input.GetKey(downKey) || isSomethingOnHead) && isGround)
+            {
+                ani.SetBool("isCrouch", true);
+                isCrouch = true;
+                bc.offset = crouchColliderOffset;
+                bc.size = crouchColliderSize;
 
-            if(Input.GetKey(leftKey))
-                sr.flipX = true;
-            
-            if(Input.GetKey(rightKey))
-                sr.flipX = false;
-        }
-        else
-        {
-            ani.SetBool("isCrouch", false);
-            isCrouch = false;
+                if (Input.GetKey(leftKey))
+                    sr.flipX = true;
+
+                if (Input.GetKey(rightKey))
+                    sr.flipX = false;
+            }
+            else
+            {
+                ani.SetBool("isCrouch", false);
+                isCrouch = false;
+                bc.offset = normalColliderOffset;
+                bc.size = normalColliderSize;
+            }
         }
         #endregion
 
@@ -224,7 +240,7 @@ public class Player : MonoBehaviour
                     currentMoveKeyPressTimeToWallClimbExit = 0;
                 }
 
-                if (Input.GetKeyDown(downKey)) 
+                if (Input.GetKeyDown(downKey))
                 {
                     isWallHangExit = true;
                 }
@@ -235,7 +251,7 @@ public class Player : MonoBehaviour
                     {
                         isWallClimb = true;
                         isWallHang = false;
-                        if(currentWallClimbCoroutine != null)
+                        if (currentWallClimbCoroutine != null)
                             StopCoroutine(currentWallClimbCoroutine);
                         currentWallClimbCoroutine = StartCoroutine(WallClimb());
                         Debug.Log("start");
@@ -314,7 +330,7 @@ public class Player : MonoBehaviour
         ani.SetTrigger("wallClimb");
         ani.SetBool("isWallClimb", true);
         var currentState = ani.GetCurrentAnimatorStateInfo(0);
-        
+
         yield return new WaitForSeconds(currentState.length / currentState.speedMultiplier);
         Vector3 climbPos = transform.position;
         climbPos.x += sr.flipX ? -1 : 1;
