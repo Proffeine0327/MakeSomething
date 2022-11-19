@@ -11,12 +11,12 @@ public class Player : MonoBehaviour
     public static Player currentPlayer { get; private set; }
 
     // keycode 개수에 맞춰서 작업하자, 또한 keycode는 반드시 묶음으로 쓰자
-    [SerializeField] int keycodeCount = 5;
     [SerializeField] private KeyCode leftKey;
     [SerializeField] private KeyCode rightKey;
     [SerializeField] private KeyCode jumpKey;
     [SerializeField] private KeyCode downKey;
     [SerializeField] private KeyCode rollKey;
+    [SerializeField] private KeyCode attackKey;
     [Header("Move")]
     [SerializeField] private float addMoveSpeed;
     [SerializeField] private float maxMoveSpeed;
@@ -25,14 +25,17 @@ public class Player : MonoBehaviour
     [Header("Jump")]
     [SerializeField] private float jumpScale;
     [SerializeField] private float maxJumpTime;
-    [SerializeField] private Vector2 jumpStopCastSize;
-    [SerializeField] private Vector2 jumpStopCastOffset;
-    [SerializeField] private LayerMask jumpStopLayer;
     [SerializeField] private bool canJump;
     [SerializeField] private bool isJumping;
+    [Header("HeadCast")]
+    [SerializeField] private Vector2 headCastSize;
+    [SerializeField] private Vector2 headCastOffset;
+    [SerializeField] private LayerMask headCastLayer;
+    [SerializeField] private bool isSomethingOnHead;
     [Header("GroundCast")]
     [SerializeField] private Vector2 groundCastSize;
     [SerializeField] private Vector2 groundCastOffset;
+    [SerializeField] private bool isGround;
     [Header("WallCast")]
     [SerializeField] private Vector2 wallSlideCastSize;
     [SerializeField] private Vector2 wallSlideCastOffset;
@@ -46,6 +49,7 @@ public class Player : MonoBehaviour
     [SerializeField] private bool isWallHang;
     [SerializeField] private bool isWallClimb;
     [Header("Crouch")]
+    [SerializeField] private float crouchMaxMoveSpeed;
     [SerializeField] private bool isCrouch;
     [SerializeField] private Vector2 crouchColliderOffset;
     [SerializeField] private Vector2 crouchColliderSize;
@@ -78,13 +82,13 @@ public class Player : MonoBehaviour
 
     private void Update()
     {
-        bool isGround = Physics2D.BoxCast((Vector2)transform.position + groundCastOffset, groundCastSize, 0f, Vector2.zero, 0, LayerMask.GetMask("Ground"));
-        ani.SetBool("isGround", isGround);
+        isGround = Physics2D.BoxCast((Vector2)transform.position + groundCastOffset, groundCastSize, 0f, Vector2.zero, 0, LayerMask.GetMask("Ground"));
+        ani.SetBool("isGround", isGround); 
 
-        bool isSomethingOnHead = Physics2D.BoxCast((Vector2)transform.position + jumpStopCastOffset, jumpStopCastSize, 0f, Vector2.zero, 0, jumpStopLayer);
+        isSomethingOnHead = Physics2D.BoxCast((Vector2)transform.position + headCastOffset, headCastSize, 0f, Vector2.zero, 0, headCastLayer);
 
         #region Move
-        if (canMove && !isCrouch)
+        if (canMove)
         {
             if (Input.GetKey(leftKey))
             {
@@ -109,37 +113,12 @@ public class Player : MonoBehaviour
         }
         #endregion
 
-        #region Crouch
-        if (!isWallSlide && !isWallClimb)
-        {
-            if ((Input.GetKey(downKey) || isSomethingOnHead) && isGround)
-            {
-                ani.SetBool("isCrouch", true);
-                isCrouch = true;
-                bc.offset = crouchColliderOffset;
-                bc.size = crouchColliderSize;
-
-                if (Input.GetKey(leftKey))
-                    sr.flipX = true;
-
-                if (Input.GetKey(rightKey))
-                    sr.flipX = false;
-            }
-            else
-            {
-                ani.SetBool("isCrouch", false);
-                isCrouch = false;
-                bc.offset = normalColliderOffset;
-                bc.size = normalColliderSize;
-            }
-        }
-        #endregion
-
         #region Jump
         if (canJump)
         {
-            if (Input.GetKeyDown(jumpKey) && isGround)
+            if (Input.GetKeyDown(jumpKey) && isGround && !isSomethingOnHead)
             {
+                isCrouch = false;
                 isJumping = true;
                 ani.SetTrigger("jump");
                 currentJumpScale = jumpScale;
@@ -170,11 +149,10 @@ public class Player : MonoBehaviour
         #region Wall
         if (!isWallHang && !isWallSlide && !isWallClimb)
         {
+            ani.SetBool("isWallHang", false);
+            ani.SetBool("isWallSlide", false);
             if (currentWallCoolTime <= 0)
             {
-                ani.SetBool("isWallHang", false);
-                ani.SetBool("isWallSlide", false);
-
                 var dirWallHangCast = wallHangCastOffset;
                 dirWallHangCast.x *= sr.flipX ? -1 : 1;
 
@@ -190,17 +168,21 @@ public class Player : MonoBehaviour
                     {
                         if (wallHangCastDetected && wallSlideCastDetected)
                         {
+                            rb.constraints = RigidbodyConstraints2D.FreezeAll;
                             isWallSlide = true;
                             ani.SetTrigger("wallSlide");
                         }
 
                         if (!wallHangCastDetected && wallSlideCastDetected)
                         {
+                            rb.constraints = RigidbodyConstraints2D.FreezeAll;
+
                             var AdjustedPos = Mathf.CeilToInt(transform.position.y) - 0.5f;
                             transform.position = new Vector3(transform.position.x, AdjustedPos, transform.position.z);
 
                             var dirWallAdjustHangCast = wallHangAdjustCastOffset;
                             dirWallAdjustHangCast.x *= GetComponent<SpriteRenderer>().flipX ? -1 : 1;
+
                             if (!Physics2D.BoxCast((Vector2)transform.position + dirWallAdjustHangCast, wallHangAdjustCastSize, 0f, Vector2.zero, 0f, LayerMask.GetMask("Ground")))
                                 transform.Translate(new Vector3(0, -1, 0));
 
@@ -217,10 +199,10 @@ public class Player : MonoBehaviour
         }
         else
         {
-            rb.constraints = RigidbodyConstraints2D.FreezeAll;
             canMove = false;
             canJump = false;
             isJumping = false;
+            isCrouch = false;
 
             if (isWallHang)
             {
@@ -254,7 +236,6 @@ public class Player : MonoBehaviour
                         if (currentWallClimbCoroutine != null)
                             StopCoroutine(currentWallClimbCoroutine);
                         currentWallClimbCoroutine = StartCoroutine(WallClimb());
-                        Debug.Log("start");
                     }
                 }
 
@@ -317,6 +298,74 @@ public class Player : MonoBehaviour
         }
         #endregion
 
+        #region Crouch
+        if (!isWallSlide && !isWallClimb)
+        {
+            if (isGround)
+            {
+                if (isSomethingOnHead)
+                {
+                    isCrouch = true;
+                }
+                else
+                {
+                    isCrouch = false;
+                }
+
+                if (Input.GetKey(downKey))
+                {
+                    isCrouch = true;
+                }
+                else
+                {
+                    if(!isSomethingOnHead)
+                        isCrouch = false;
+                }
+            }
+            else
+            {
+                isCrouch = false;
+            }
+
+            if (isCrouch)
+            {
+                ani.SetLayerWeight(1, 1);
+                canMove = false;
+                bc.offset = crouchColliderOffset;
+                bc.size = crouchColliderSize;
+
+                if (Input.GetKey(leftKey))
+                {
+                    rb.AddForce(new Vector2(-addMoveSpeed * (isGround ? 1 : moveSpeedInAirRaito), 0));
+                    rb.velocity = new Vector2(Mathf.Clamp(rb.velocity.x, -crouchMaxMoveSpeed, crouchMaxMoveSpeed), rb.velocity.y);
+                    ani.SetBool("isMoveKeyPressed", true);
+
+                    sr.flipX = true;
+                }
+                else if (Input.GetKey(rightKey))
+                {
+                    rb.AddForce(new Vector2(addMoveSpeed * (isGround ? 1 : moveSpeedInAirRaito), 0));
+                    rb.velocity = new Vector2(Mathf.Clamp(rb.velocity.x, -crouchMaxMoveSpeed, crouchMaxMoveSpeed), rb.velocity.y);
+                    ani.SetBool("isMoveKeyPressed", true);
+
+                    sr.flipX = false;
+                }
+                else
+                {
+                    ani.SetBool("isMoveKeyPressed", false);
+                }
+            }
+            else
+            {
+                ani.SetLayerWeight(1, 0);
+                if(!isWallHang && !isWallSlide)
+                    canMove = true;
+                bc.offset = normalColliderOffset;
+                bc.size = normalColliderSize;
+            }
+        }
+        #endregion
+
         ani.SetFloat("xVelocity", rb.velocity.x);
         ani.SetFloat("yVelocity", rb.velocity.y);
     }
@@ -352,7 +401,7 @@ public class Player : MonoBehaviour
         Gizmos.DrawWireCube((Vector2)transform.position + groundCastOffset, groundCastSize);
 
         Gizmos.color = Color.blue;
-        Gizmos.DrawWireCube((Vector2)transform.position + jumpStopCastOffset, jumpStopCastSize);
+        Gizmos.DrawWireCube((Vector2)transform.position + headCastOffset, headCastSize);
 
         var dirWallSlideCast = wallSlideCastOffset;
         dirWallSlideCast.x *= GetComponent<SpriteRenderer>().flipX ? -1 : 1;
@@ -383,14 +432,7 @@ public class PlayerEditor : Editor
         EditorGUILayout.PropertyField(iterator);
         EditorGUILayout.Space(10);
 
-        iterator.NextVisible(true); //keycodeCount
-        EditorGUI.BeginDisabledGroup(true);
-        EditorGUILayout.PropertyField(iterator);
-        EditorGUI.EndDisabledGroup();
-
-        var _keycodeCount = iterator.intValue;
-
-        for (int i = 0; i < _keycodeCount; i++)
+        for (int i = 0; i < 6; i++)
         {
             iterator.NextVisible(false);
             var currentPropertyName = iterator.name;
