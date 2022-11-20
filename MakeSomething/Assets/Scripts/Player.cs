@@ -10,7 +10,7 @@ public class Player : MonoBehaviour
 {
     public static Player currentPlayer { get; private set; }
 
-    // keycode 개수에 맞춰서 작업하자, 또한 keycode는 반드시 묶음으로 쓰자
+    //keycode는 반드시 묶음으로 쓰자
     [SerializeField] private KeyCode leftKey;
     [SerializeField] private KeyCode rightKey;
     [SerializeField] private KeyCode jumpKey;
@@ -43,6 +43,8 @@ public class Player : MonoBehaviour
     [SerializeField] private Vector2 wallHangCastOffset;
     [SerializeField] private Vector2 wallHangAdjustCastSize;
     [SerializeField] private Vector2 wallHangAdjustCastOffset;
+    [SerializeField] private Vector2 wallHangBlockCastSize;
+    [SerializeField] private Vector2 wallHangBlockCastOffset;
     [SerializeField] private float moveKeyPressTimeToWallExit;
     [SerializeField] private float wallCoolTime;
     [SerializeField] private bool isWallSlide;
@@ -161,6 +163,7 @@ public class Player : MonoBehaviour
 
                 bool wallHangCastDetected = Physics2D.BoxCast((Vector2)transform.position + dirWallHangCast, wallHangCastSize, 0f, Vector2.zero, 0f, LayerMask.GetMask("Ground"));
                 bool wallSlideCastDetected = Physics2D.BoxCast((Vector2)transform.position + dirWallSlideCast, wallSlideCastSize, 0f, Vector2.zero, 0f, LayerMask.GetMask("Ground"));
+                bool wallHangBlockCastDetected = Physics2D.BoxCast((Vector2)transform.position + wallHangBlockCastOffset, wallHangBlockCastSize, 0, Vector2.zero, 0, LayerMask.GetMask("Ground"));
 
                 if (Input.GetKey(sr.flipX ? leftKey : rightKey))
                 {
@@ -173,7 +176,7 @@ public class Player : MonoBehaviour
                             ani.SetTrigger("wallSlide");
                         }
 
-                        if (!wallHangCastDetected && wallSlideCastDetected)
+                        if (!wallHangCastDetected && wallSlideCastDetected && !wallHangBlockCastDetected)
                         {
                             rb.constraints = RigidbodyConstraints2D.FreezeAll;
 
@@ -417,6 +420,9 @@ public class Player : MonoBehaviour
         dirWallAdjustHangCast.x *= GetComponent<SpriteRenderer>().flipX ? -1 : 1;
         Gizmos.color = Color.gray;
         Gizmos.DrawWireCube((Vector2)transform.position + dirWallAdjustHangCast, wallHangAdjustCastSize);
+
+        Gizmos.color = Color.magenta;
+        Gizmos.DrawWireCube((Vector2)transform.position + wallHangBlockCastOffset, wallHangBlockCastSize);
     }
 }
 
@@ -429,7 +435,9 @@ public class PlayerEditor : Editor
         var iterator = serializedObject.GetIterator();
 
         iterator.NextVisible(true); //m_script
+        EditorGUI.BeginDisabledGroup(true);
         EditorGUILayout.PropertyField(iterator);
+        EditorGUI.EndDisabledGroup();
         EditorGUILayout.Space(10);
 
         for (int i = 0; i < 6; i++)

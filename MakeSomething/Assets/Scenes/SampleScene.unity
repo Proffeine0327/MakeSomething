@@ -31792,6 +31792,8 @@ MonoBehaviour:
   wallHangCastOffset: {x: 0.45, y: 1.98}
   wallHangAdjustCastSize: {x: 0.05, y: 0.32}
   wallHangAdjustCastOffset: {x: 0.45, y: 0.71}
+  wallHangBlockCastSize: {x: 0.6, y: 1.11}
+  wallHangBlockCastOffset: {x: 0, y: -0.6}
   moveKeyPressTimeToWallExit: 0.4
   wallCoolTime: 0.15
   isWallSlide: 0
@@ -31891,7 +31893,7 @@ SpriteRenderer:
   m_SortingOrder: 10
   m_Sprite: {fileID: 1229036538, guid: 45d8f19195dc24648998f504f01e8e70, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 0
+  m_FlipX: 1
   m_FlipY: 0
   m_DrawMode: 0
   m_Size: {x: 1, y: 1}
@@ -31908,7 +31910,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2073186118}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5.84, y: 6.29, z: 0}
+  m_LocalPosition: {x: 12.456, y: 33.07, z: 0}
   m_LocalScale: {x: 0.8, y: 0.8, z: 0.8}
   m_ConstrainProportionsScale: 1
   m_Children:
