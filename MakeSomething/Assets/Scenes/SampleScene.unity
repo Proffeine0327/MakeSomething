@@ -31765,10 +31765,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   leftKey: 276
   rightKey: 275
-  jumpKey: 120
+  jumpKey: 122
   downKey: 274
   rollKey: 304
-  attackKey: 122
+  attackKey: 120
+  horizontalKeyRaw: 0
   addMoveSpeed: 3800
   maxMoveSpeed: 7
   moveSpeedInAirRaito: 0.25
@@ -31797,22 +31798,26 @@ MonoBehaviour:
   wallHangBlockCastOffset: {x: 0, y: -0.6}
   moveKeyPressTimeToWallExit: 0.4
   wallCoolTime: 0.15
+  canWallDetect: 1
   isWallSlide: 0
   isWallHang: 0
   isWallClimb: 0
   crouchMaxMoveSpeed: 2
-  canCrouch: 0
+  canCrouch: 1
   isCrouch: 0
   crouchColliderOffset: {x: -0.0015531778, y: 0.47211808}
   crouchColliderSize: {x: 0.83444107, y: 0.8503798}
-  attackCastSize: {x: 0, y: 0}
-  attackCastOffset: {x: 0, y: 0}
-  secondAttackChargeTime: 1
+  attackCastSize: {x: 1.84, y: 1.27}
+  attackCastOffset: {x: 1.48, y: 0.98}
+  attackEnemyLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  secondAttackChargeTime: 0.2
+  attackAddForceScale: 150
   canAttack: 1
   secondAttackCharged: 0
   isFirstAttacking: 0
   isSecondAttacking: 0
-  currentSecondAttackChargeTime: 0
 --- !u!61 &2073186121
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -31903,7 +31908,7 @@ SpriteRenderer:
   m_SortingOrder: 10
   m_Sprite: {fileID: 1229036538, guid: 45d8f19195dc24648998f504f01e8e70, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 1
+  m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
   m_Size: {x: 1, y: 1}
