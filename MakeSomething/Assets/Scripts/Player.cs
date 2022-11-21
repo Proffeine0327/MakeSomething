@@ -25,6 +25,7 @@ public class Player : MonoBehaviour
     [Header("Jump")]
     [SerializeField] private float jumpScale;
     [SerializeField] private float maxJumpTime;
+    [SerializeField] private float maxJumpScaleRatio;
     [SerializeField] private bool canJump;
     [SerializeField] private bool isJumping;
     [Header("HeadCast")]
@@ -52,15 +53,25 @@ public class Player : MonoBehaviour
     [SerializeField] private bool isWallClimb;
     [Header("Crouch")]
     [SerializeField] private float crouchMaxMoveSpeed;
+    [SerializeField] private bool canCrouch;
     [SerializeField] private bool isCrouch;
     [SerializeField] private Vector2 crouchColliderOffset;
     [SerializeField] private Vector2 crouchColliderSize;
+    [Header("Attack")]
+    [SerializeField] private Vector2 attackCastSize;
+    [SerializeField] private Vector2 attackCastOffset;
+    [SerializeField] private float secondAttackChargeTime;
+    [SerializeField] private bool canAttack;
+    [SerializeField] private bool secondAttackCharged;
+    [SerializeField] private bool isFirstAttacking;
+    [SerializeField] private bool isSecondAttacking;
 
     private float currentJumpTime;
     private float currentJumpScale;
     private float currentMoveKeyPressTimeToWallClimbExit;
     private float currentWallCoolTime;
-    private Coroutine currentWallClimbCoroutine;
+    [SerializeField] private float currentSecondAttackChargeTime;
+    private Coroutine wallClimbCoroutine;
     private Vector2 normalColliderSize;
     private Vector2 normalColliderOffset;
 
@@ -85,7 +96,7 @@ public class Player : MonoBehaviour
     private void Update()
     {
         isGround = Physics2D.BoxCast((Vector2)transform.position + groundCastOffset, groundCastSize, 0f, Vector2.zero, 0, LayerMask.GetMask("Ground"));
-        ani.SetBool("isGround", isGround); 
+        ani.SetBool("isGround", isGround);
 
         isSomethingOnHead = Physics2D.BoxCast((Vector2)transform.position + headCastOffset, headCastSize, 0f, Vector2.zero, 0, headCastLayer);
 
@@ -94,7 +105,7 @@ public class Player : MonoBehaviour
         {
             if (Input.GetKey(leftKey))
             {
-                rb.AddForce(new Vector2(-addMoveSpeed * (isGround ? 1 : moveSpeedInAirRaito), 0));
+                rb.AddForce(new Vector2(-addMoveSpeed * (isGround ? 1 : moveSpeedInAirRaito) * Time.deltaTime, 0));
                 rb.velocity = new Vector2(Mathf.Clamp(rb.velocity.x, -maxMoveSpeed, maxMoveSpeed), rb.velocity.y);
                 ani.SetBool("isMoveKeyPressed", true);
 
@@ -102,7 +113,7 @@ public class Player : MonoBehaviour
             }
             else if (Input.GetKey(rightKey))
             {
-                rb.AddForce(new Vector2(addMoveSpeed * (isGround ? 1 : moveSpeedInAirRaito), 0));
+                rb.AddForce(new Vector2(addMoveSpeed * (isGround ? 1 : moveSpeedInAirRaito) * Time.deltaTime, 0));
                 rb.velocity = new Vector2(Mathf.Clamp(rb.velocity.x, -maxMoveSpeed, maxMoveSpeed), rb.velocity.y);
                 ani.SetBool("isMoveKeyPressed", true);
 
@@ -129,7 +140,7 @@ public class Player : MonoBehaviour
 
             if (Input.GetKey(jumpKey) && isJumping)
             {
-                currentJumpScale *= 0.98f;
+                currentJumpScale = jumpScale - (currentJumpTime / maxJumpTime * maxJumpScaleRatio * jumpScale);
                 rb.velocity = new Vector2(rb.velocity.x, currentJumpScale);
 
                 currentJumpTime += Time.deltaTime;
@@ -236,9 +247,9 @@ public class Player : MonoBehaviour
                     {
                         isWallClimb = true;
                         isWallHang = false;
-                        if (currentWallClimbCoroutine != null)
-                            StopCoroutine(currentWallClimbCoroutine);
-                        currentWallClimbCoroutine = StartCoroutine(WallClimb());
+                        if (wallClimbCoroutine != null)
+                            StopCoroutine(wallClimbCoroutine);
+                        wallClimbCoroutine = StartCoroutine(WallClimb());
                     }
                 }
 
@@ -302,75 +313,146 @@ public class Player : MonoBehaviour
         #endregion
 
         #region Crouch
-        if (!isWallSlide && !isWallClimb)
+        if (canCrouch)
         {
-            if (isGround)
+            if (!isWallSlide && !isWallClimb)
             {
-                if (isSomethingOnHead)
+                if (isGround)
                 {
-                    isCrouch = true;
+                    if (isSomethingOnHead)
+                    {
+                        isCrouch = true;
+                    }
+                    else
+                    {
+                        isCrouch = false;
+                    }
+
+                    if (Input.GetKey(downKey))
+                    {
+                        isCrouch = true;
+                    }
+                    else
+                    {
+                        if (!isSomethingOnHead)
+                            isCrouch = false;
+                    }
                 }
                 else
                 {
                     isCrouch = false;
                 }
 
-                if (Input.GetKey(downKey))
+                if (isCrouch)
                 {
-                    isCrouch = true;
+                    ani.SetLayerWeight(1, 1);
+                    canMove = false;
+                    bc.offset = crouchColliderOffset;
+                    bc.size = crouchColliderSize;
+
+                    if (Input.GetKey(leftKey))
+                    {
+                        rb.AddForce(new Vector2(-addMoveSpeed * (isGround ? 1 : moveSpeedInAirRaito) * Time.deltaTime, 0));
+                        rb.velocity = new Vector2(Mathf.Clamp(rb.velocity.x, -crouchMaxMoveSpeed, crouchMaxMoveSpeed), rb.velocity.y);
+                        ani.SetBool("isMoveKeyPressed", true);
+
+                        sr.flipX = true;
+                    }
+                    else if (Input.GetKey(rightKey))
+                    {
+                        rb.AddForce(new Vector2(addMoveSpeed * (isGround ? 1 : moveSpeedInAirRaito) * Time.deltaTime, 0));
+                        rb.velocity = new Vector2(Mathf.Clamp(rb.velocity.x, -crouchMaxMoveSpeed, crouchMaxMoveSpeed), rb.velocity.y);
+                        ani.SetBool("isMoveKeyPressed", true);
+
+                        sr.flipX = false;
+                    }
+                    else
+                    {
+                        ani.SetBool("isMoveKeyPressed", false);
+                    }
                 }
                 else
                 {
-                    if(!isSomethingOnHead)
-                        isCrouch = false;
+                    ani.SetLayerWeight(1, 0);
+                    if (!isWallHang && !isWallSlide)
+                        canMove = true;
+                    bc.offset = normalColliderOffset;
+                    bc.size = normalColliderSize;
                 }
             }
-            else
+        }
+        #endregion
+
+        #region Attack
+        if(currentSecondAttackChargeTime > 0)
+        {
+            currentSecondAttackChargeTime -= Time.deltaTime;
+            secondAttackCharged = true;
+        }
+        else
+        {
+            secondAttackCharged = false;
+        }
+
+        if (canAttack)
+        {
+            if (Input.GetKeyDown(attackKey))
             {
-                isCrouch = false;
-            }
-
-            if (isCrouch)
-            {
-                ani.SetLayerWeight(1, 1);
-                canMove = false;
-                bc.offset = crouchColliderOffset;
-                bc.size = crouchColliderSize;
-
-                if (Input.GetKey(leftKey))
+                canAttack = false;
+                if(!secondAttackCharged)
                 {
-                    rb.AddForce(new Vector2(-addMoveSpeed * (isGround ? 1 : moveSpeedInAirRaito), 0));
-                    rb.velocity = new Vector2(Mathf.Clamp(rb.velocity.x, -crouchMaxMoveSpeed, crouchMaxMoveSpeed), rb.velocity.y);
-                    ani.SetBool("isMoveKeyPressed", true);
-
-                    sr.flipX = true;
-                }
-                else if (Input.GetKey(rightKey))
-                {
-                    rb.AddForce(new Vector2(addMoveSpeed * (isGround ? 1 : moveSpeedInAirRaito), 0));
-                    rb.velocity = new Vector2(Mathf.Clamp(rb.velocity.x, -crouchMaxMoveSpeed, crouchMaxMoveSpeed), rb.velocity.y);
-                    ani.SetBool("isMoveKeyPressed", true);
-
-                    sr.flipX = false;
+                    ani.SetBool("isSecondAttack", false);
+                    isFirstAttacking = true;
                 }
                 else
                 {
-                    ani.SetBool("isMoveKeyPressed", false);
+                    ani.SetBool("isSecondAttack", true);
+                    isSecondAttacking = true;
+                    currentSecondAttackChargeTime = 0;
                 }
-            }
-            else
-            {
-                ani.SetLayerWeight(1, 0);
-                if(!isWallHang && !isWallSlide)
-                    canMove = true;
-                bc.offset = normalColliderOffset;
-                bc.size = normalColliderSize;
+
+                StartCoroutine(AttackAnimation());
             }
         }
         #endregion
 
         ani.SetFloat("xVelocity", rb.velocity.x);
         ani.SetFloat("yVelocity", rb.velocity.y);
+    }
+
+    IEnumerator AttackAnimation()
+    {
+        canMove = false;
+        canJump = false;
+        canCrouch = false;
+
+        isCrouch = false;
+        isJumping = false;
+        isWallHang = false;
+        isWallClimb = false;
+        isWallSlide = false;
+        rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+
+        ani.SetTrigger("attack");
+        yield return new WaitForEndOfFrame();
+        yield return new WaitForEndOfFrame();
+        var currentState = ani.GetCurrentAnimatorStateInfo(0);
+        yield return new WaitForSeconds(currentState.length / currentState.speed);
+        
+        canMove = true;
+        canJump = true;
+        canCrouch = true;
+
+        if(!isSecondAttacking)
+            currentSecondAttackChargeTime = secondAttackChargeTime;
+        isFirstAttacking = false;
+        isSecondAttacking = false;
+        canAttack = true;
+    }
+
+    public void Attack()
+    {
+
     }
 
     IEnumerator WallClimb()
