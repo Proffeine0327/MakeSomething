@@ -1,10 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 public class Player : MonoBehaviour
 {
@@ -65,16 +62,25 @@ public class Player : MonoBehaviour
     [SerializeField] private LayerMask attackEnemyLayer;
     [SerializeField] private float secondAttackChargeTime;
     [SerializeField] private float attackAddForceScale;
+    [SerializeField] private float attackDelay;
     [SerializeField] private bool canAttack;
     [SerializeField] private bool secondAttackCharged;
     [SerializeField] private bool isFirstAttacking;
     [SerializeField] private bool isSecondAttacking;
+    [Header("Hp")]
+    [SerializeField] private int maxHp;
+    [SerializeField] private int currentHp; 
+
+    public int MaxHp { get { return maxHp; } }
+    public int CurrentHp { get {return currentHp; } }
 
     private float currentJumpTime;
     private float currentJumpScale;
     private float currentMoveKeyPressTimeToWallClimbExit;
     private float currentWallCoolTime;
     private float currentSecondAttackChargeTime;
+    private bool crouchEnterTrigger;
+    private bool crouchExitTrigger;
     private Coroutine wallClimbCoroutine;
     private Vector2 normalColliderSize;
     private Vector2 normalColliderOffset;
@@ -95,6 +101,8 @@ public class Player : MonoBehaviour
 
         normalColliderOffset = bc.offset;
         normalColliderSize = bc.size;
+
+        currentHp = maxHp;
     }
 
     private void Update()
@@ -108,10 +116,10 @@ public class Player : MonoBehaviour
 
         horizontalKeyRaw = 0;
 
-        if(Input.GetKey(leftKey))
+        if (Input.GetKey(leftKey))
             horizontalKeyRaw += -1;
-        
-        if(Input.GetKey(rightKey))
+
+        if (Input.GetKey(rightKey))
             horizontalKeyRaw += 1;
 
         if (canMove)
@@ -337,36 +345,65 @@ public class Player : MonoBehaviour
                 {
                     if (isSomethingOnHead)
                     {
-                        isCrouch = true;
+                        if (!isCrouch)
+                            crouchEnterTrigger = true;
                     }
                     else
                     {
-                        isCrouch = false;
+                        if (!Input.GetKey(downKey))
+                        {
+                            if (isCrouch)
+                                crouchExitTrigger = true;
+                        }
                     }
 
                     if (Input.GetKey(downKey))
                     {
-                        isCrouch = true;
+                        if (!isCrouch)
+                            crouchEnterTrigger = true;
                     }
                     else
                     {
                         if (!isSomethingOnHead)
-                            isCrouch = false;
+                        {
+                            if (isCrouch)
+                                crouchExitTrigger = true;
+                        }
                     }
                 }
                 else
                 {
-                    isCrouch = false;
+                    if (isCrouch)
+                        crouchExitTrigger = true;
                 }
 
-                if (isCrouch)
+                if (crouchEnterTrigger)
                 {
+                    crouchEnterTrigger = false;
+
+                    isCrouch = true;
                     ani.SetLayerWeight(1, 1);
                     canMove = false;
                     bc.offset = crouchColliderOffset;
                     bc.size = crouchColliderSize;
                     canAttack = false;
+                }
 
+                if (crouchExitTrigger)
+                {
+                    crouchExitTrigger = false;
+
+                    isCrouch = false;
+                    ani.SetLayerWeight(1, 0);
+                    if (!isWallHang && !isWallSlide)
+                        canMove = true;
+                    bc.offset = normalColliderOffset;
+                    bc.size = normalColliderSize;
+                    canAttack = true;
+                }
+
+                if (isCrouch)
+                {
                     if (horizontalKeyRaw == -1)
                     {
                         rb.AddForce(new Vector2(-addMoveSpeed * (isGround ? 1 : moveSpeedInAirRaito) * Time.deltaTime, 0));
@@ -388,16 +425,6 @@ public class Player : MonoBehaviour
                         ani.SetBool("isMoveKeyPressed", false);
                     }
                 }
-                else
-                {
-                    ani.SetLayerWeight(1, 0);
-                    if (!isWallHang && !isWallSlide)
-                        canMove = true;
-                    bc.offset = normalColliderOffset;
-                    bc.size = normalColliderSize;
-
-                    canAttack = true;
-                }
             }
         }
         #endregion
@@ -413,7 +440,7 @@ public class Player : MonoBehaviour
             secondAttackCharged = false;
         }
 
-        if (canAttack)
+        if (canAttack && !isWallClimb && !isCrouch)
         {
             if (Input.GetKeyDown(attackKey))
             {
@@ -465,10 +492,15 @@ public class Player : MonoBehaviour
         canCrouch = true;
         canWallDetect = true;
 
+
         if (!isSecondAttacking)
             currentSecondAttackChargeTime = secondAttackChargeTime;
+        else
+            yield return new WaitForSeconds(attackDelay);
+
         isFirstAttacking = false;
         isSecondAttacking = false;
+
         canAttack = true;
     }
 
@@ -542,40 +574,3 @@ public class Player : MonoBehaviour
         Gizmos.DrawWireCube((Vector2)transform.position + dirAttackCastOffset, attackCastSize);
     }
 }
-
-#if UNITY_EDITOR
-[ExecuteInEditMode, CustomEditor(typeof(Player))]
-public class PlayerEditor : Editor
-{
-    public override void OnInspectorGUI()
-    {
-        var iterator = serializedObject.GetIterator();
-
-        iterator.NextVisible(true); //m_script
-        EditorGUI.BeginDisabledGroup(true);
-        EditorGUILayout.PropertyField(iterator);
-        EditorGUI.EndDisabledGroup();
-        EditorGUILayout.Space(10);
-
-        for (int i = 0; i < 6; i++)
-        {
-            iterator.NextVisible(false);
-            var currentPropertyName = iterator.name;
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.PrefixLabel(iterator.name);
-            if (GUILayout.Button(System.Enum.GetName(typeof(KeyCode), iterator.enumValueFlag), EditorStyles.popup))
-            {
-                SearchableKeycodeWindow.Open((x) =>
-                {
-                    serializedObject.FindProperty(currentPropertyName).enumValueFlag = (int)x;
-                    serializedObject.ApplyModifiedProperties();
-                });
-            }
-            EditorGUILayout.EndHorizontal();
-        }
-
-        while (iterator.NextVisible(false)) EditorGUILayout.PropertyField(iterator);
-        serializedObject.ApplyModifiedProperties();
-    }
-}
-#endif
