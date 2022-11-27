@@ -60,6 +60,7 @@ public class Player : MonoBehaviour
     [SerializeField] private Vector2 attackCastSize;
     [SerializeField] private Vector2 attackCastOffset;
     [SerializeField] private LayerMask attackEnemyLayer;
+    [SerializeField] private int attackDamage;
     [SerializeField] private float secondAttackChargeTime;
     [SerializeField] private float attackAddForceScale;
     [SerializeField] private float attackDelay;
@@ -504,6 +505,11 @@ public class Player : MonoBehaviour
         canAttack = true;
     }
 
+    public void Damaged(int amount)
+    {
+        currentHp -= amount;
+    }
+
     public void Attack()
     {
         rb.AddForce(new Vector2((sr.flipX ? -1 : 1) * attackAddForceScale, 0));
@@ -512,6 +518,7 @@ public class Player : MonoBehaviour
         dirAttackCastOffset.x *= sr.flipX ? -1 : 1;
 
         RaycastHit2D[] hitEnemy = Physics2D.BoxCastAll((Vector2)transform.position + dirAttackCastOffset, attackCastSize, 0, Vector2.zero, 0, attackEnemyLayer);
+        foreach(var enemy in hitEnemy) enemy.collider.GetComponent<BaseEnemy>()?.Damaged(10);    
     }
 
     IEnumerator WallClimb()
