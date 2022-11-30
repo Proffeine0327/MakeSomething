@@ -11,10 +11,8 @@ enum SlimeType
 
 public class Slime : BaseEnemy
 {
-    [SerializeField] private int maxHp;
     [SerializeField] private SlimeType slimeType;
-    [Header("Stun")]
-    [SerializeField] private bool isStun;
+    [SerializeField] private GameObject hpBarPrefeb;
     [Header("Jump")]
     [SerializeField] private float moveScale;
     [SerializeField] private float jumpScale;
@@ -37,13 +35,14 @@ public class Slime : BaseEnemy
     [SerializeField] private Vector2 attackCastOffset;
     [SerializeField] private bool canAttack;
     [SerializeField] private bool isAttacking;
+    [Header("Damaged")]
+    [SerializeField] private GameObject hitParticle;
 
-    private int currentHp;
-    private float currentStunTime = 0;
     private bool stunExitTrigger;
     private RaycastHit2D detectInfo;
     private Coroutine currentJumpCoroutine;
     private Coroutine currentAttackCoroutine;
+    private UI_HpBar hpbar;
 
     Rigidbody2D rb;
     SpriteRenderer sr;
@@ -58,38 +57,29 @@ public class Slime : BaseEnemy
         ani = GetComponent<Animator>();
 
         ani.SetLayerWeight((int)slimeType, 1);
+
+        hpbar = Instantiate(hpBarPrefeb, transform.position, Quaternion.identity, GameObject.Find("UI_HpBarShow").transform).GetComponent<UI_HpBar>();
+        hpbar.SetEnemy(this);
     }
 
     void Update()
     {
+        if(currentHp <= 0)
+        {
+            Destroy(gameObject);
+            Destroy(hpbar.gameObject);
+            return;
+        }
+
         isGround = Physics2D.BoxCast((Vector2)transform.position + groundCastOffset, groundCastSize, 0f, Vector2.zero, 0, LayerMask.GetMask("Ground"));
         ani.SetBool("isGround", isGround);
         ani.SetFloat("yVelocity", rb.velocity.y);
 
-        if (currentStunTime > 0)
+        if(sr.color.a < 1)
         {
-            stunExitTrigger = true;
-
-            currentStunTime -= Time.deltaTime;
-            isStun = true;
-
-            if(currentJumpCoroutine != null)
-                StopCoroutine(currentJumpCoroutine);
-            if(currentAttackCoroutine != null)
-                StopCoroutine(currentAttackCoroutine);
-            canJump = false;
-            canAttack = false;
-        }
-        else
-        {
-            isStun = false;
-
-            if(stunExitTrigger)
-            {
-                stunExitTrigger = false;
-                canJump = true;
-                canAttack = false;
-            }
+            var color = sr.color;
+            color.a += Time.deltaTime;
+            sr.color = color;
         }
 
         if (!isPlayerDetected)
@@ -129,8 +119,6 @@ public class Slime : BaseEnemy
 
     IEnumerator Jump()
     {
-        Debug.Log("Jump!");
-
         var relativePlayerPosX = Player.currentPlayer.transform.position.x - transform.position.x;
         sr.flipX = relativePlayerPosX > 0 ? false : true;
 
@@ -150,7 +138,6 @@ public class Slime : BaseEnemy
             yield return new WaitForEndOfFrame();
             isGroundInJumpWaitTime = false;
         }
-        Debug.Log("Ground!");
 
         if (!isGroundInJumpWaitTime)
         {
@@ -183,8 +170,12 @@ public class Slime : BaseEnemy
 
     public override void Damaged(int amount)
     {
-        Stun(0.3f);
         currentHp -= amount;
+
+        var color = sr.color;
+        color.a = 0.5f;
+        sr.color = color;
+        ParticleScript.SpawnParticle(hitParticle,transform.position);
     }
 
     public override void Attack()
@@ -196,12 +187,6 @@ public class Slime : BaseEnemy
         {
             Player.currentPlayer.Damaged(attackDamage);
         }
-    }
-
-    public void Stun(float time)
-    {
-        if (currentStunTime < time)
-            currentStunTime = time;
     }
 
     private void OnDrawGizmos()
