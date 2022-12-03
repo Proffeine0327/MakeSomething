@@ -486,7 +486,7 @@ public class Player : MonoBehaviour
         yield return new WaitForEndOfFrame();
         yield return new WaitForEndOfFrame();
         var currentState = ani.GetCurrentAnimatorStateInfo(0);
-        yield return new WaitForSeconds(currentState.length / currentState.speed);
+        yield return new WaitForSeconds(currentState.length);
 
         canMove = true;
         canJump = true;

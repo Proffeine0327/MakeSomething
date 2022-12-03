@@ -5,16 +5,30 @@ using UnityEngine;
 [RequireComponent(typeof(SpriteRenderer))]
 public class ParticleScript : MonoBehaviour
 {
-    [SerializeField] private Sprite[] sprites;
+    [SerializeField] private ParticleSpriteContainer spriteContainer;
+    [SerializeField] private float scale;
     [SerializeField] private float time;
 
     SpriteRenderer sr;
     private int index;
     private float currentTime;
 
-    public static void SpawnParticle(GameObject particle, Vector3 pos)
+    public static void SpawnParticle(GameObject particle, Vector3 pos, Quaternion rotate, float scale)
     {
-        Instantiate(particle, pos, Quaternion.identity);
+        var p = MultipleObjectPool.GetObject(particle.name);
+        p.transform.position = pos;
+        p.transform.rotation = rotate;
+        p.transform.localScale = Vector3.one * scale;
+    }
+
+    public static void SpawnParticle(GameObject particle, Vector3 pos, Quaternion rotate, float scale, bool isFlip)
+    {
+        var p = MultipleObjectPool.GetObject(particle.name);
+        p.transform.position = pos;
+        p.transform.rotation = rotate;
+        p.transform.localScale = Vector3.one * scale;
+        p.transform.localScale = Vector3.one * scale;
+        p.GetComponent<SpriteRenderer>().flipX = isFlip;
     }
 
     void Start()
@@ -25,19 +39,21 @@ public class ParticleScript : MonoBehaviour
 
     void Update()
     {
-        if(sprites.Length > 1)
+        if(spriteContainer.Sprites.Length > 1)
         {
             currentTime += Time.deltaTime;
         
             if(currentTime > time)
             {
                 index++;
-                if(index == sprites.Length)
+                if(index == spriteContainer.Sprites.Length)
                 {
-                    Destroy(this.gameObject);
+                    index = 0;
+                    currentTime = 0;
+                    MultipleObjectPool.PoolObject(gameObject.name, gameObject);
                     return;
                 }
-                sr.sprite = sprites[index];
+                sr.sprite = spriteContainer.Sprites[index];
                 currentTime = 0;
             }
         }
