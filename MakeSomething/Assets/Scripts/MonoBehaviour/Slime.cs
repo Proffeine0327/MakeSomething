@@ -60,13 +60,6 @@ public class Slime : BaseEnemy
         ani.SetLayerWeight((int)slimeType, 1);
     }
 
-    private void Start() 
-    {
-        hpbar = MultipleObjectPool.GetObject("hpbar").GetComponent<UI_HpBar>();
-        hpbar.transform.SetParent(GameObject.Find("UI_HpBarShow").transform);
-        hpbar.SetEnemy(this);
-    }
-
     void Update()
     {
         if(currentHp <= 0)
@@ -119,6 +112,25 @@ public class Slime : BaseEnemy
                     currentJumpCoroutine = StartCoroutine(AttackAnimation());
                 }
             }
+        }
+    }
+
+    private void OnBecameVisible() 
+    {
+        if(hpbar == null)
+        {
+            hpbar = MultipleObjectPool.GetObject("hpbar").GetComponent<UI_HpBar>();
+            hpbar.transform.SetParent(GameObject.Find("UI_HpBarShow").transform);
+            hpbar.SetEnemy(this);
+        }
+    }
+
+    private void OnBecameInvisible() 
+    {
+        if(hpbar != null)
+        {
+            MultipleObjectPool.PoolObject("hpbar", hpbar.gameObject);
+            hpbar = null;
         }
     }
 
@@ -180,7 +192,8 @@ public class Slime : BaseEnemy
         var color = sr.color;
         color.a = 0.5f;
         sr.color = color;
-        ParticleScript.SpawnParticle(hitParticle,transform.position, Quaternion.identity, 1);
+        EffectManager.SpawnEffect(EffectName.hit,transform.position, Quaternion.identity, 1);
+        EffectManager.SpawnEffect(EffectName.blood, transform.position, Quaternion.identity, 1,  Player.currentPlayer.transform.position.x - transform.position.x > 0 ? true : false);
     }
 
     public override void Attack()
@@ -188,7 +201,7 @@ public class Slime : BaseEnemy
         var dirAttackCastOffset = attackCastOffset;
         dirAttackCastOffset.x *= sr.flipX ? -1 : 1;
 
-        ParticleScript.SpawnParticle(attackParticle, transform.position + new Vector3(0.943f * (sr.flipX ? -1 : 1),-0.054f,0.00771f), Quaternion.Euler(0,0,-12), 0.07f, sr.flipX);
+        EffectManager.SpawnEffect(EffectName.attack_swing, transform.position + new Vector3(0.943f * (sr.flipX ? -1 : 1),-0.054f,0.00771f), Quaternion.Euler(0,0,-12), 0.07f, sr.flipX);
         if(Physics2D.BoxCast((Vector2)transform.position + dirAttackCastOffset, attackCastSize, 0f, Vector2.zero, 0, LayerMask.GetMask("Player")))
         {
             Player.currentPlayer.Damaged(attackDamage);

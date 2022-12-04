@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 7785443023895221671}
   - component: {fileID: 6914103350591207265}
   m_Layer: 0
-  m_Name: Particle_AttackSwing
+  m_Name: Effect_AttackSwing
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -97,6 +97,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87e59a92b8011824eba17c4871946a68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isParticleSystem: 0
   spriteContainer: {fileID: 11400000, guid: 1f681fae0d70c08488ae32e683eb2259, type: 2}
   scale: 0.061
   time: 0.05

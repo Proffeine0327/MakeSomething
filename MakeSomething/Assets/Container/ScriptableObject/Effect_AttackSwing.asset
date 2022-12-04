@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8119eaa707925a046add7ce8d91eb7e0, type: 3}
-  m_Name: Particle_hit
+  m_Name: Effect_AttackSwing
   m_EditorClassIdentifier: 
   sprites:
-  - {fileID: 21300000, guid: e9f75b71ba17b904fb16d06744d000e1, type: 3}
-  - {fileID: 21300000, guid: f78f67bf716b8fb428c079ed1804ca1f, type: 3}
-  - {fileID: 21300000, guid: 0b7f643ce5767ca4aa4de87dc2e2c423, type: 3}
-  - {fileID: 21300000, guid: 9d3314c3694ee7c47afe650262292bf6, type: 3}
+  - {fileID: 21300000, guid: a5d5e22ed6a319f48a9df92528c3d93e, type: 3}
+  - {fileID: 21300000, guid: 671c261f7cf945f4aabdcd43691715cb, type: 3}
+  - {fileID: 21300000, guid: 90852dbffa680434189409100d39c388, type: 3}
+  - {fileID: 21300000, guid: 2954971f742b8c940b426054709566a3, type: 3}

@@ -2,8 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Scriptable Object/Particle", fileName = "Particle_")]
-public class ParticleSpriteContainer : ScriptableObject
+[CreateAssetMenu(menuName = "Scriptable Object/Effect", fileName = "Effect_")]
+public class EffectSpriteContainer : ScriptableObject
 {
     [SerializeField] private Sprite[] sprites;
 
