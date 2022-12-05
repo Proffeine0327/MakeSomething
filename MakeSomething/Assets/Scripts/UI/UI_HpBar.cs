@@ -13,7 +13,7 @@ public class UI_HpBar : MonoBehaviour
 
     private void Start() 
     {
-        rt = GetComponent<RectTransform>();    
+        rt = GetComponent<RectTransform>();
     }
 
     void Update()

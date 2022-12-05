@@ -56,6 +56,11 @@ public class Player : MonoBehaviour
     [SerializeField] private bool isCrouch;
     [SerializeField] private Vector2 crouchColliderOffset;
     [SerializeField] private Vector2 crouchColliderSize;
+    [Header("Roll")]
+    [SerializeField] private float rollSpeed;
+    [SerializeField] private float rollWaitTime;
+    [SerializeField] private bool canRoll;
+    [SerializeField] private bool isRoll;
     [Header("Attack")]
     [SerializeField] private Vector2 attackCastSize;
     [SerializeField] private Vector2 attackCastOffset;
@@ -114,7 +119,6 @@ public class Player : MonoBehaviour
         isSomethingOnHead = Physics2D.BoxCast((Vector2)transform.position + headCastOffset, headCastSize, 0f, Vector2.zero, 0, headCastLayer);
 
         #region Move
-
         horizontalKeyRaw = 0;
 
         if (Input.GetKey(leftKey))
@@ -388,6 +392,7 @@ public class Player : MonoBehaviour
                     bc.offset = crouchColliderOffset;
                     bc.size = crouchColliderSize;
                     canAttack = false;
+                    canRoll = false;
                 }
 
                 if (crouchExitTrigger)
@@ -401,6 +406,7 @@ public class Player : MonoBehaviour
                     bc.offset = normalColliderOffset;
                     bc.size = normalColliderSize;
                     canAttack = true;
+                    canRoll = true;
                 }
 
                 if (isCrouch)
@@ -463,8 +469,50 @@ public class Player : MonoBehaviour
         }
         #endregion
 
+        #region Roll
+        if(canRoll)
+        {
+            if(Input.GetKeyDown(rollKey))
+            {
+                canRoll = false;
+                StartCoroutine(RollAnimation());
+            }
+        }
+        #endregion
         ani.SetFloat("xVelocity", rb.velocity.x);
         ani.SetFloat("yVelocity", rb.velocity.y);
+    }
+
+    IEnumerator RollAnimation()
+    {
+        isRoll = true;
+        canMove = false;
+        canJump = false;
+        canCrouch = false;
+        canWallDetect = false;
+
+        ani.SetTrigger("roll");
+        yield return new WaitForEndOfFrame();
+
+        var flip = sr.flipX ? -1 : 1;
+
+        var currentState = ani.GetCurrentAnimatorStateInfo(0);
+        for(float t = 0; t < currentState.length; t += Time.deltaTime)
+        {
+            rb.velocity = new Vector2(rollSpeed * flip, rb.velocity.y);
+            yield return new WaitForEndOfFrame();
+        }
+        
+        rb.velocity = new Vector2(maxMoveSpeed * horizontalKeyRaw, rb.velocity.y);
+
+        canMove = true;
+        canJump = true;
+        canCrouch = true;
+        canWallDetect = true;
+        isRoll = false;
+
+        yield return new WaitForSeconds(rollWaitTime);
+        canRoll = true;
     }
 
     IEnumerator AttackAnimation()
@@ -473,6 +521,7 @@ public class Player : MonoBehaviour
         canJump = false;
         canCrouch = false;
         canWallDetect = false;
+        canRoll = false;
 
         isCrouch = false;
         isJumping = false;
@@ -492,7 +541,7 @@ public class Player : MonoBehaviour
         canJump = true;
         canCrouch = true;
         canWallDetect = true;
-
+        canRoll = true;
 
         if (!isSecondAttacking)
             currentSecondAttackChargeTime = secondAttackChargeTime;
