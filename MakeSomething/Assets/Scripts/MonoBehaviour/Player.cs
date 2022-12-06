@@ -88,6 +88,7 @@ public class Player : MonoBehaviour
     private bool crouchEnterTrigger;
     private bool crouchExitTrigger;
     private Coroutine wallClimbCoroutine;
+    private Coroutine rollCoroutine;
     private Vector2 normalColliderSize;
     private Vector2 normalColliderOffset;
 
@@ -210,6 +211,8 @@ public class Player : MonoBehaviour
                         {
                             if (wallHangCastDetected && wallSlideCastDetected)
                             {
+                                if(rollCoroutine != null)
+                                    StopCoroutine(rollCoroutine);
                                 rb.constraints = RigidbodyConstraints2D.FreezeAll;
                                 isWallSlide = true;
                                 ani.SetTrigger("wallSlide");
@@ -217,6 +220,9 @@ public class Player : MonoBehaviour
 
                             if (!wallHangCastDetected && wallSlideCastDetected && !wallHangBlockCastDetected)
                             {
+                                if(rollCoroutine != null)
+                                    StopCoroutine(rollCoroutine);
+
                                 rb.constraints = RigidbodyConstraints2D.FreezeAll;
 
                                 var AdjustedPos = Mathf.CeilToInt(transform.position.y) - 0.5f;
@@ -243,8 +249,10 @@ public class Player : MonoBehaviour
             {
                 canMove = false;
                 canJump = false;
+                canRoll = false;
                 isJumping = false;
                 isCrouch = false;
+                canCrouch = false;
 
                 if (isWallHang)
                 {
@@ -286,6 +294,8 @@ public class Player : MonoBehaviour
                         currentMoveKeyPressTimeToWallClimbExit = 0;
                         canMove = true;
                         canJump = true;
+                        canCrouch = true;
+                        canRoll = true;
                         isWallHang = false;
                         currentWallCoolTime = wallCoolTime;
                         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
@@ -323,6 +333,8 @@ public class Player : MonoBehaviour
                         rb.velocity = new Vector2((sr.flipX ? 1 : -1) * maxMoveSpeed, jumpScale * 1.2f);
                         canMove = true;
                         canJump = true;
+                        canRoll = true;
+                        canCrouch = true;
                         currentWallCoolTime = wallCoolTime;
                         sr.flipX = !sr.flipX;
                     }
@@ -332,6 +344,8 @@ public class Player : MonoBehaviour
                         currentMoveKeyPressTimeToWallClimbExit = 0;
                         canMove = true;
                         canJump = true;
+                        canRoll = true;
+                        canCrouch = true;
                         isWallSlide = false;
                         currentWallCoolTime = wallCoolTime;
                         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
@@ -475,7 +489,7 @@ public class Player : MonoBehaviour
             if(Input.GetKeyDown(rollKey))
             {
                 canRoll = false;
-                StartCoroutine(RollAnimation());
+                rollCoroutine = StartCoroutine(RollAnimation());
             }
         }
         #endregion
@@ -489,6 +503,7 @@ public class Player : MonoBehaviour
         canMove = false;
         canJump = false;
         canCrouch = false;
+        canRoll = false;
         canWallDetect = false;
 
         ani.SetTrigger("roll");
@@ -497,8 +512,11 @@ public class Player : MonoBehaviour
         var flip = sr.flipX ? -1 : 1;
 
         var currentState = ani.GetCurrentAnimatorStateInfo(0);
+        rb.velocity = Vector2.down * 2;
         for(float t = 0; t < currentState.length; t += Time.deltaTime)
         {
+            if(t > currentState.length * 0.7f)
+                canWallDetect = true;
             rb.velocity = new Vector2(rollSpeed * flip, rb.velocity.y);
             yield return new WaitForEndOfFrame();
         }
@@ -508,7 +526,6 @@ public class Player : MonoBehaviour
         canMove = true;
         canJump = true;
         canCrouch = true;
-        canWallDetect = true;
         isRoll = false;
 
         yield return new WaitForSeconds(rollWaitTime);
@@ -574,6 +591,8 @@ public class Player : MonoBehaviour
     {
         canMove = false;
         canJump = false;
+        canRoll = false;
+        canCrouch = false;
         isWallHang = false;
 
         ani.SetTrigger("wallClimb");
@@ -593,6 +612,8 @@ public class Player : MonoBehaviour
 
         canMove = true;
         canJump = true;
+        canRoll = true;
+        canCrouch = true;
     }
 
     private void OnDrawGizmos()
