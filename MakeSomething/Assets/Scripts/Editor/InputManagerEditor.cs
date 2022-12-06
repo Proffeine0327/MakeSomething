@@ -14,13 +14,14 @@ public class InputManagerEditor : Editor
     SerializedProperty _keys;
     SerializedProperty _values;
     ReorderableList list;
+    int selectedIndex;
 
     private void OnEnable()
     {
         _keys = serializedObject.FindProperty("keys");
         _values = serializedObject.FindProperty("values");
 
-        list = new ReorderableList(serializedObject, _values, false, true, true, true);
+        list = new ReorderableList(serializedObject, _values, true, true, true, true);
 
         list.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) => {
             var i = index;
@@ -58,6 +59,24 @@ public class InputManagerEditor : Editor
                 (target as InputManager).AddTable(x);
                 serializedObject.ApplyModifiedProperties();
             });
+        };
+
+        list.onRemoveCallback = list => {
+            var i = list.index;
+
+            (target as InputManager).RemoveTable(_keys.GetArrayElementAtIndex(i).stringValue);
+            serializedObject.ApplyModifiedProperties();
+        };
+
+        list.onSelectCallback = list => {
+            selectedIndex = list.index;
+        };
+
+        list.onReorderCallback = list => {
+            var i = list.index;
+
+            _keys.MoveArrayElement(selectedIndex, i);
+            serializedObject.ApplyModifiedProperties();
         };
     }
 

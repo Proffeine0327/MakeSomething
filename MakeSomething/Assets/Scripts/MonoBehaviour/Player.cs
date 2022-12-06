@@ -7,13 +7,6 @@ public class Player : MonoBehaviour
 {
     public static Player currentPlayer { get; private set; }
 
-    //keycode는 반드시 묶음으로 쓰자
-    [SerializeField] private KeyCode leftKey;
-    [SerializeField] private KeyCode rightKey;
-    [SerializeField] private KeyCode jumpKey;
-    [SerializeField] private KeyCode downKey;
-    [SerializeField] private KeyCode rollKey;
-    [SerializeField] private KeyCode attackKey;
     [Header("Move")]
     [SerializeField] private int horizontalKeyRaw;
     [SerializeField] private float addMoveSpeed;
@@ -56,11 +49,6 @@ public class Player : MonoBehaviour
     [SerializeField] private bool isCrouch;
     [SerializeField] private Vector2 crouchColliderOffset;
     [SerializeField] private Vector2 crouchColliderSize;
-    [Header("Roll")]
-    [SerializeField] private float rollSpeed;
-    [SerializeField] private float rollWaitTime;
-    [SerializeField] private bool canRoll;
-    [SerializeField] private bool isRoll;
     [Header("Attack")]
     [SerializeField] private Vector2 attackCastSize;
     [SerializeField] private Vector2 attackCastOffset;
@@ -122,10 +110,10 @@ public class Player : MonoBehaviour
         #region Move
         horizontalKeyRaw = 0;
 
-        if (Input.GetKey(leftKey))
+        if (InputManager.GetKey("leftkey"))
             horizontalKeyRaw += -1;
 
-        if (Input.GetKey(rightKey))
+        if (InputManager.GetKey("rightkey"))
             horizontalKeyRaw += 1;
 
         if (canMove)
@@ -156,7 +144,7 @@ public class Player : MonoBehaviour
         #region Jump
         if (canJump)
         {
-            if (Input.GetKeyDown(jumpKey) && isGround && !isSomethingOnHead)
+            if (InputManager.GetKeyDown("jumpkey") && isGround && !isSomethingOnHead)
             {
                 isCrouch = false;
                 isJumping = true;
@@ -165,7 +153,7 @@ public class Player : MonoBehaviour
                 rb.velocity = new Vector2(rb.velocity.x, currentJumpScale);
             }
 
-            if (Input.GetKey(jumpKey) && isJumping)
+            if (InputManager.GetKey("jumpkey") && isJumping)
             {
                 currentJumpScale = jumpScale - (currentJumpTime / maxJumpTime * maxJumpScaleRatio * jumpScale);
                 rb.velocity = new Vector2(rb.velocity.x, currentJumpScale);
@@ -178,7 +166,7 @@ public class Player : MonoBehaviour
                 }
             }
 
-            if (Input.GetKeyUp(jumpKey))
+            if (InputManager.GetKeyUp("jumpkey"))
             {
                 currentJumpTime = 0;
                 isJumping = false;
@@ -249,7 +237,6 @@ public class Player : MonoBehaviour
             {
                 canMove = false;
                 canJump = false;
-                canRoll = false;
                 isJumping = false;
                 isCrouch = false;
                 canCrouch = false;
@@ -272,12 +259,12 @@ public class Player : MonoBehaviour
                         currentMoveKeyPressTimeToWallClimbExit = 0;
                     }
 
-                    if (Input.GetKeyDown(downKey))
+                    if (InputManager.GetKeyDown("downkey"))
                     {
                         isWallHangExit = true;
                     }
 
-                    if (Input.GetKey(jumpKey))
+                    if (InputManager.GetKey("jumpkey"))
                     {
                         if (!isWallClimb)
                         {
@@ -295,7 +282,6 @@ public class Player : MonoBehaviour
                         canMove = true;
                         canJump = true;
                         canCrouch = true;
-                        canRoll = true;
                         isWallHang = false;
                         currentWallCoolTime = wallCoolTime;
                         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
@@ -321,10 +307,10 @@ public class Player : MonoBehaviour
                         currentMoveKeyPressTimeToWallClimbExit = 0;
                     }
 
-                    if (Input.GetKeyDown(downKey))
+                    if (InputManager.GetKeyDown("downkey"))
                         isWallSlideExit = true;
 
-                    if (Input.GetKeyDown(jumpKey))
+                    if (InputManager.GetKeyDown("jumpkey"))
                     {
                         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
                         ani.SetTrigger("jump");
@@ -333,7 +319,6 @@ public class Player : MonoBehaviour
                         rb.velocity = new Vector2((sr.flipX ? 1 : -1) * maxMoveSpeed, jumpScale * 1.2f);
                         canMove = true;
                         canJump = true;
-                        canRoll = true;
                         canCrouch = true;
                         currentWallCoolTime = wallCoolTime;
                         sr.flipX = !sr.flipX;
@@ -344,7 +329,6 @@ public class Player : MonoBehaviour
                         currentMoveKeyPressTimeToWallClimbExit = 0;
                         canMove = true;
                         canJump = true;
-                        canRoll = true;
                         canCrouch = true;
                         isWallSlide = false;
                         currentWallCoolTime = wallCoolTime;
@@ -369,14 +353,14 @@ public class Player : MonoBehaviour
                     }
                     else
                     {
-                        if (!Input.GetKey(downKey))
+                        if (!InputManager.GetKey("downkey"))
                         {
                             if (isCrouch)
                                 crouchExitTrigger = true;
                         }
                     }
 
-                    if (Input.GetKey(downKey))
+                    if (InputManager.GetKey("downkey"))
                     {
                         if (!isCrouch)
                             crouchEnterTrigger = true;
@@ -406,7 +390,6 @@ public class Player : MonoBehaviour
                     bc.offset = crouchColliderOffset;
                     bc.size = crouchColliderSize;
                     canAttack = false;
-                    canRoll = false;
                 }
 
                 if (crouchExitTrigger)
@@ -420,7 +403,6 @@ public class Player : MonoBehaviour
                     bc.offset = normalColliderOffset;
                     bc.size = normalColliderSize;
                     canAttack = true;
-                    canRoll = true;
                 }
 
                 if (isCrouch)
@@ -463,7 +445,7 @@ public class Player : MonoBehaviour
 
         if (canAttack && !isWallClimb && !isCrouch)
         {
-            if (Input.GetKeyDown(attackKey))
+            if (InputManager.GetKeyDown("attackkey"))
             {
                 canAttack = false;
                 if (!secondAttackCharged)
@@ -482,54 +464,8 @@ public class Player : MonoBehaviour
             }
         }
         #endregion
-
-        #region Roll
-        if(canRoll)
-        {
-            if(Input.GetKeyDown(rollKey))
-            {
-                canRoll = false;
-                rollCoroutine = StartCoroutine(RollAnimation());
-            }
-        }
-        #endregion
         ani.SetFloat("xVelocity", rb.velocity.x);
         ani.SetFloat("yVelocity", rb.velocity.y);
-    }
-
-    IEnumerator RollAnimation()
-    {
-        isRoll = true;
-        canMove = false;
-        canJump = false;
-        canCrouch = false;
-        canRoll = false;
-        canWallDetect = false;
-
-        ani.SetTrigger("roll");
-        yield return new WaitForEndOfFrame();
-
-        var flip = sr.flipX ? -1 : 1;
-
-        var currentState = ani.GetCurrentAnimatorStateInfo(0);
-        rb.velocity = Vector2.down * 2;
-        for(float t = 0; t < currentState.length; t += Time.deltaTime)
-        {
-            if(t > currentState.length * 0.7f)
-                canWallDetect = true;
-            rb.velocity = new Vector2(rollSpeed * flip, rb.velocity.y);
-            yield return new WaitForEndOfFrame();
-        }
-        
-        rb.velocity = new Vector2(maxMoveSpeed * horizontalKeyRaw, rb.velocity.y);
-
-        canMove = true;
-        canJump = true;
-        canCrouch = true;
-        isRoll = false;
-
-        yield return new WaitForSeconds(rollWaitTime);
-        canRoll = true;
     }
 
     IEnumerator AttackAnimation()
@@ -538,7 +474,6 @@ public class Player : MonoBehaviour
         canJump = false;
         canCrouch = false;
         canWallDetect = false;
-        canRoll = false;
 
         isCrouch = false;
         isJumping = false;
@@ -558,7 +493,6 @@ public class Player : MonoBehaviour
         canJump = true;
         canCrouch = true;
         canWallDetect = true;
-        canRoll = true;
 
         if (!isSecondAttacking)
             currentSecondAttackChargeTime = secondAttackChargeTime;
@@ -591,7 +525,6 @@ public class Player : MonoBehaviour
     {
         canMove = false;
         canJump = false;
-        canRoll = false;
         canCrouch = false;
         isWallHang = false;
 
@@ -612,7 +545,6 @@ public class Player : MonoBehaviour
 
         canMove = true;
         canJump = true;
-        canRoll = true;
         canCrouch = true;
     }
 

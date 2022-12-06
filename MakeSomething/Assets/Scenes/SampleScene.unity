@@ -34102,6 +34102,7 @@ GameObject:
   - component: {fileID: 2073186123}
   - component: {fileID: 2073186122}
   - component: {fileID: 2073186121}
+  - component: {fileID: 2073186125}
   - component: {fileID: 2073186120}
   - component: {fileID: 2073186119}
   m_Layer: 6
@@ -34143,12 +34144,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1b544cc40a03a5248b6319d9689c9514, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  leftKey: 276
-  rightKey: 275
-  jumpKey: 122
-  downKey: 274
-  rollKey: 304
-  attackKey: 120
   horizontalKeyRaw: 0
   addMoveSpeed: 3800
   maxMoveSpeed: 7
@@ -34187,10 +34182,6 @@ MonoBehaviour:
   isCrouch: 0
   crouchColliderOffset: {x: -0.0015531778, y: 0.47211808}
   crouchColliderSize: {x: 0.83444107, y: 0.8503798}
-  rollSpeed: 12
-  rollWaitTime: 0.5
-  canRoll: 1
-  isRoll: 0
   attackCastSize: {x: 1.84, y: 1.27}
   attackCastOffset: {x: 1.42, y: 0.98}
   attackEnemyLayer:
@@ -34321,6 +34312,25 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2073186125
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2073186118}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 229cad400587ca44b8926017390fd01f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  keys:
+  - rightkey
+  - leftkey
+  - jumpkey
+  - downkey
+  - attackkey
+  values: 0000000000000000000000000000000000000000
 --- !u!1001 &210751510193386788
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -31,7 +31,7 @@ public class InputManagerTableAddWindow : EditorWindow
         key = EditorGUILayout.TextField(key);
 
         EditorGUI.BeginDisabledGroup(tableKeys.Contains(key));
-        if(GUILayout.Button("Add", GUILayout.MaxWidth(40)))
+        if(GUILayout.Button("Add", GUILayout.MaxWidth(40)) ||  Event.current.keyCode == KeyCode.Return)
         {
             action.Invoke(key);
             this.Close();
