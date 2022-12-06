@@ -34330,7 +34330,7 @@ MonoBehaviour:
   - jumpkey
   - downkey
   - attackkey
-  values: 0000000000000000000000000000000000000000
+  values: 13010000140100007a0000001201000078000000
 --- !u!1001 &210751510193386788
 PrefabInstance:
   m_ObjectHideFlags: 0

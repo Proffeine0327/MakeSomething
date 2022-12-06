@@ -40,15 +40,15 @@ public class InputManagerEditor : Editor
                 if(!(target as InputManager).table.ContainsKey(k))
                 {
                     var beforeValue = value.enumValueFlag;
-                    (target as InputManager).ChangeTableKey(key.stringValue, k);
-                    (target as InputManager).ChangeValue(k, (KeyCode)beforeValue);
+                    _keys.GetArrayElementAtIndex(i).stringValue = k;
+                    serializedObject.ApplyModifiedProperties();
                 }
             }
 
             if(GUI.Button(new Rect(rect.x + rect.width / 2, rect.y, rect.width / 2, EditorGUIUtility.singleLineHeight), Enum.GetName(typeof(KeyCode), value.enumValueFlag), EditorStyles.popup))
             {
                 SearchableKeycodeWindow.Open((x) => {
-                    (target as InputManager).ChangeValue(key.stringValue, x);
+                    _values.GetArrayElementAtIndex(i).enumValueFlag = (int)x;
                     serializedObject.ApplyModifiedProperties();
                 });
             }
@@ -64,7 +64,7 @@ public class InputManagerEditor : Editor
         list.onRemoveCallback = list => {
             var i = list.index;
 
-            (target as InputManager).RemoveTable(_keys.GetArrayElementAtIndex(i).stringValue);
+            _keys.DeleteArrayElementAtIndex(i);
             serializedObject.ApplyModifiedProperties();
         };
 
