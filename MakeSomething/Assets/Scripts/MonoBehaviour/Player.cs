@@ -63,10 +63,10 @@ public class Player : MonoBehaviour
     [SerializeField] private bool isSecondAttacking;
     [Header("Hp")]
     [SerializeField] private int maxHp;
-    [SerializeField] private int currentHp; 
+    [SerializeField] private int currentHp;
 
     public int MaxHp { get { return maxHp; } }
-    public int CurrentHp { get {return currentHp; } }
+    public int CurrentHp { get { return currentHp; } }
 
     private float currentJumpTime;
     private float currentJumpScale;
@@ -80,10 +80,10 @@ public class Player : MonoBehaviour
     private Vector2 normalColliderSize;
     private Vector2 normalColliderOffset;
 
-    Rigidbody2D rb;
-    SpriteRenderer sr;
-    BoxCollider2D bc;
-    Animator ani;
+    private Rigidbody2D rb;
+    private SpriteRenderer sr;
+    private BoxCollider2D bc;
+    private Animator ani;
 
     private void Awake()
     {
@@ -199,7 +199,7 @@ public class Player : MonoBehaviour
                         {
                             if (wallHangCastDetected && wallSlideCastDetected)
                             {
-                                if(rollCoroutine != null)
+                                if (rollCoroutine != null)
                                     StopCoroutine(rollCoroutine);
                                 rb.constraints = RigidbodyConstraints2D.FreezeAll;
                                 isWallSlide = true;
@@ -208,7 +208,7 @@ public class Player : MonoBehaviour
 
                             if (!wallHangCastDetected && wallSlideCastDetected && !wallHangBlockCastDetected)
                             {
-                                if(rollCoroutine != null)
+                                if (rollCoroutine != null)
                                     StopCoroutine(rollCoroutine);
 
                                 rb.constraints = RigidbodyConstraints2D.FreezeAll;
@@ -518,7 +518,7 @@ public class Player : MonoBehaviour
         dirAttackCastOffset.x *= sr.flipX ? -1 : 1;
 
         RaycastHit2D[] hitEnemy = Physics2D.BoxCastAll((Vector2)transform.position + dirAttackCastOffset, attackCastSize, 0, Vector2.zero, 0, attackEnemyLayer);
-        foreach(var enemy in hitEnemy) enemy.collider.GetComponent<BaseEnemy>()?.Damaged(10);    
+        foreach (var enemy in hitEnemy) enemy.collider.GetComponent<BaseEnemy>()?.Damaged(10);
     }
 
     IEnumerator WallClimb()

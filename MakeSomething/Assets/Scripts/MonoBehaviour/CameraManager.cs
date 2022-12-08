@@ -10,13 +10,13 @@ public class CameraManager : MonoBehaviour
     [SerializeField] private Vector3 offset;
     [SerializeField] private float followSpeed;
     
-    void Update()
+    void FixedUpdate()
     {
         if(target != null)
         {
             var vector2Transform = target.transform.position;
             vector2Transform.z = transform.position.z;                      
-            transform.position = Vector3.Lerp(transform.position, vector2Transform + offset, followSpeed * Time.deltaTime);
+            transform.position = Vector3.Lerp(transform.position, vector2Transform + offset, followSpeed);
         }
     }
 }

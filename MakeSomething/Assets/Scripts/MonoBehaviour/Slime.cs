@@ -2,17 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-enum SlimeType
-{
-    red,
-    green,
-    blue,
-}
-
 public class Slime : BaseEnemy
 {
-    [SerializeField] private SlimeType slimeType;
-    [SerializeField] private GameObject hpBarPrefeb;
+    [SerializeField] private Color slimeColor;
     [Header("Jump")]
     [SerializeField] private float moveScale;
     [SerializeField] private float jumpScale;
@@ -56,8 +48,6 @@ public class Slime : BaseEnemy
         rb = GetComponent<Rigidbody2D>();
         sr = GetComponent<SpriteRenderer>();
         ani = GetComponent<Animator>();
-
-        ani.SetLayerWeight((int)slimeType, 1);
     }
 
     void Update()
@@ -142,7 +132,7 @@ public class Slime : BaseEnemy
         ani.SetTrigger("jump");
         yield return new WaitForEndOfFrame();
 
-        var currentState = ani.GetCurrentAnimatorStateInfo((int)slimeType);
+        var currentState = ani.GetCurrentAnimatorStateInfo(0);
         yield return new WaitForSeconds(currentState.length);
 
         rb.velocity = new Vector2(moveScale * (relativePlayerPosX > 0 ? 1 : -1), jumpScale);
@@ -159,7 +149,7 @@ public class Slime : BaseEnemy
         if (!isGroundInJumpWaitTime)
         {
             yield return new WaitForEndOfFrame();
-            currentState = ani.GetCurrentAnimatorStateInfo((int)slimeType);
+            currentState = ani.GetCurrentAnimatorStateInfo(0);
             yield return new WaitForSeconds(currentState.length);
         }
         isJumping = false;
@@ -175,7 +165,7 @@ public class Slime : BaseEnemy
         ani.SetTrigger("attack");
         yield return new WaitForEndOfFrame();
 
-        var currentState = ani.GetCurrentAnimatorStateInfo((int)slimeType);
+        var currentState = ani.GetCurrentAnimatorStateInfo(0);
         yield return new WaitForSeconds(currentState.length);
 
         yield return new WaitForSeconds(attackWaitTime);
@@ -193,7 +183,9 @@ public class Slime : BaseEnemy
         color.a = 0.5f;
         sr.color = color;
         EffectManager.SpawnEffect(EffectName.hit,transform.position, Quaternion.identity, 1);
-        EffectManager.SpawnEffect(EffectName.blood, transform.position, Quaternion.identity, 1,  Player.currentPlayer.transform.position.x - transform.position.x > 0 ? true : false);
+        var blood = EffectManager.SpawnEffect(EffectName.blood, transform.position, Quaternion.identity, 1,  Player.currentPlayer.transform.position.x - transform.position.x > 0 ? true : false);
+        var main = blood.GetComponent<ParticleSystem>().main;
+        main.startColor = new ParticleSystem.MinMaxGradient(new Color(slimeColor.r * 0.8f, slimeColor.g * 0.8f, slimeColor.b * 0.8f, slimeColor.a));
     }
 
     public override void Attack()
@@ -205,6 +197,9 @@ public class Slime : BaseEnemy
         if(Physics2D.BoxCast((Vector2)transform.position + dirAttackCastOffset, attackCastSize, 0f, Vector2.zero, 0, LayerMask.GetMask("Player")))
         {
             Player.currentPlayer.Damaged(attackDamage);
+            var blood = EffectManager.SpawnEffect(EffectName.blood, Player.currentPlayer.transform.position + Vector3.up, Quaternion.identity, 1,  !Player.currentPlayer.GetComponent<SpriteRenderer>().flipX);
+            var main = blood.GetComponent<ParticleSystem>().main;
+            main.startColor = new ParticleSystem.MinMaxGradient(Color.red);
         }
     }
 
