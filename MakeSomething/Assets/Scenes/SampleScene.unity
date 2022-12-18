@@ -24610,7 +24610,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 622787208}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.01, y: -5, z: 0}
+  m_LocalPosition: {x: -0.010000229, y: -5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -24631,9 +24631,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a1e1b9d44240ac43bedf018f7206fed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  time: 0
   sun: {fileID: 509092911}
   moon: {fileID: 1419513023}
   sky: {fileID: 1881757434}
+  daySkyColor: {r: 0.43137255, g: 0.72156864, b: 0.94509804, a: 1}
+  nightfallSkyColor: {r: 0.8784314, g: 0.44705883, b: 0.20392157, a: 1}
+  nightSkyColor: {r: 0.45490196, g: 0.4509804, b: 0.6901961, a: 1}
+  globalLight: {fileID: 2045583704}
+  dayLightColor: {r: 1, g: 1, b: 1, a: 0}
+  nightfallLightColor: {r: 1, g: 0.7254902, b: 0.60784316, a: 0}
+  nightLightColor: {r: 0.76862746, g: 0.7764706, b: 1, a: 0}
 --- !u!1 &755112759
 GameObject:
   m_ObjectHideFlags: 0
@@ -49117,7 +49125,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: -1245566022, guid: 23870fb232597bb47a58b17249020ed3, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.8207547, g: 0.8207547, b: 0.8207547, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -49581,7 +49589,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: ce16f3030e9457f4c918f862732573d1, type: 3}
-  m_Color: {r: 0.20215324, g: 0.1806248, b: 0.31132078, a: 1}
+  m_Color: {r: 0.43137255, g: 0.72156864, b: 0.94509804, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -49888,7 +49896,7 @@ MonoBehaviour:
   m_BlendStyleIndex: 0
   m_FalloffIntensity: 0.5
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 0.55
+  m_Intensity: 0.3
   m_LightVolumeIntensity: 1
   m_LightVolumeIntensityEnabled: 0
   m_ApplyToSortingLayers: 00000000

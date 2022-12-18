@@ -6,7 +6,7 @@ using UnityEngine;
 public class Player : MonoBehaviour
 {
     public static Player currentPlayer { get; private set; }
-
+    
     [Header("Move")]
     [SerializeField] private int horizontalKeyRaw;
     [SerializeField] private float addMoveSpeed;
