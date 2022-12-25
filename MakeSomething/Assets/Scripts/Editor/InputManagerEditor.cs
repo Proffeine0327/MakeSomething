@@ -57,7 +57,7 @@ public class InputManagerEditor : Editor
         list.onAddCallback += (list) => {
             InputManagerTableAddWindow.Open((target as InputManager).table.Keys.ToArray(), (x) => {
                 (target as InputManager).AddTable(x);
-                serializedObject.ApplyModifiedProperties();
+                serializedObject.ApplyModifiedProperties(); //
             });
         };
 

@@ -16,7 +16,7 @@ public class GameManager : MonoBehaviour
     void Update()
     {
         //1sec == 1 game min;
-        //8640sec == 2.4hour == 1 game day
+        //8640sec == 24min == 1 game day
         gameTime += Time.deltaTime * 60;
         DayPass.SetTime(gameTime);
     }
